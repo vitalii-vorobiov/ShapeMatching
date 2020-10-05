@@ -18,7 +18,7 @@ int shapeMatching::CommandLineParser::parseCommandLine(int argc, char **argv)
     desc.add_options()
             ("help,h", "Show help")
             ("image,i", po::value<std::string>(), "Input image in which you want to find a shape")
-            ("shape,t", po::value<std::string>(), "A shape that you will search for")
+            ("shape,s", po::value<std::string>(), "A shape that you will search for")
             ;
 
     po::variables_map vm;
