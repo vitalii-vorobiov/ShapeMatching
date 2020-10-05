@@ -4,11 +4,39 @@
 #include <opencv2/opencv.hpp>
 #include "CommandLineParser.h"
 
+
+
 struct position
 {
     std::vector<int> bestRow {};
     std::vector<int> bestCol {};
 };
+
+void addPosition(float threshold, std::vector<float> &arr, position &position, int x, int y) {
+//    Push initial values to the array
+    if (arr.empty()) {
+        position.bestCol.push_back(x);
+        position.bestRow.push_back(y);
+        arr.push_back(threshold);
+    }
+
+//    if current threshold is greater than some from the array, replace it
+    for (int i = 0; i < arr.capacity(); ++i) {
+        if (threshold > arr[i]) {
+            position.bestCol[i] = x;
+            position.bestRow[i] = y;
+            arr[i] = threshold;
+            break;
+        }
+    }
+
+//    fill the array if we have not yet gone beyond its size (current top 3)
+    if (arr.capacity() < 3) {
+        position.bestCol.push_back(x);
+        position.bestRow.push_back(y);
+        arr.push_back(threshold);
+    }
+}
 
 int main(int argc, char** argv) {
     shapeMatching::CommandLineParser commandLineParser{};
@@ -21,14 +49,6 @@ int main(int argc, char** argv) {
     cv::Mat grayShape;
     cv::cvtColor(commandLineParser.shape, grayShape, cv::COLOR_BGR2GRAY);
 
-//    cv::Mat dx, dy;
-//    Sobel(grayImage, dx, CV_32F, 1,0);
-//    Sobel(grayImage, dy, CV_32F, 0,1);
-//
-//    cv::Mat angle, mag;
-//    cartToPolar(dx, dy, mag, angle);
-
-
 //    Performing edge detection in order to find direction vectors
     cv::Mat imageEdges;
     cv::Canny(grayImage, imageEdges, 20, 20);
@@ -38,6 +58,7 @@ int main(int argc, char** argv) {
 
 
     position position{};
+    std::vector<float> thresholds;
     for (int x = 0; x < commandLineParser.image.cols - commandLineParser.shape.cols; ++x)
     {
         for (int y = 0; y < commandLineParser.image.rows - commandLineParser.shape.rows; ++y)
@@ -57,12 +78,7 @@ int main(int argc, char** argv) {
             }
             s = s / (float)commandLineParser.shape.cols * (float)commandLineParser.shape.rows;
 
-//            Thresholding our result
-            if ( s > 80000000 )
-            {
-                position.bestRow.push_back(y);
-                position.bestCol.push_back(x);
-            }
+            addPosition(s, thresholds, position, x, y);
         }
     }
 
